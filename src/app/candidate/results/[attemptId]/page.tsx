@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import type { AttemptAnswerWithQuestion } from "@/lib/types";
+import type { AttemptAnswerWithQuestion, ExamAttemptWithExam } from "@/lib/types";
 
 export default async function CandidateResultPage({
   params,
@@ -55,7 +55,7 @@ export default async function CandidateResultPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>{(attempt as any).exams?.title}</CardTitle>
+          <CardTitle>{(attempt as ExamAttemptWithExam).exams?.title}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-8">

@@ -257,7 +257,7 @@ export async function POST(request: Request) {
 
   try {
     // 1. Create admin user
-    const { data: adminUser, error: adminError } =
+    const { error: adminError } =
       await admin.auth.admin.createUser({
         email: "admin@examplatform.com",
         password: "admin123456",
@@ -342,9 +342,9 @@ export async function POST(request: Request) {
       })),
       exam: { id: exam.id, title: exam.title, questions: QUESTIONS.length },
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     return NextResponse.json(
-      { error: err.message || "Seed failed" },
+      { error: err instanceof Error ? err.message : "Seed failed" },
       { status: 500 }
     );
   }

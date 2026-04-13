@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import type { AttemptAnswerWithQuestion } from "@/lib/types";
+import type { AttemptAnswerWithQuestion, ExamAttemptWithCandidate } from "@/lib/types";
 
 export default async function AdminAttemptDetailPage({
   params,
@@ -49,15 +49,15 @@ export default async function AdminAttemptDetailPage({
 
       <Card>
         <CardHeader>
-          <CardTitle>{(attempt as any).exams?.title}</CardTitle>
+          <CardTitle>{(attempt as ExamAttemptWithCandidate & { exams: { title: string } }).exams?.title}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-8">
             <div>
               <p className="text-sm text-gray-500">Candidate</p>
               <p className="font-medium">
-                {(attempt as any).profiles?.full_name} (
-                {(attempt as any).profiles?.email})
+                {(attempt as ExamAttemptWithCandidate & { exams: { title: string } }).profiles?.full_name} (
+                {(attempt as ExamAttemptWithCandidate & { exams: { title: string } }).profiles?.email})
               </p>
             </div>
             <div className="text-center">

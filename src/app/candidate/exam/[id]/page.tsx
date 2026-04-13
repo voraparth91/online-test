@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback, use } from "react";
-import { useRouter } from "next/navigation";
 import { startExamAttempt, submitExam, getExamForTaking } from "@/actions/exam-taking";
 import type { Exam, Question } from "@/lib/types";
 import { QuestionCard } from "@/components/question-card";
@@ -19,7 +18,6 @@ export default function TakeExamPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: examId } = use(params);
-  const router = useRouter();
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [attemptId, setAttemptId] = useState<string | null>(null);
@@ -41,7 +39,7 @@ export default function TakeExamPage({
 
       setExam(examResult.exam);
       setQuestions(
-        (examResult.questions ?? []).map((q: any) => ({
+        (examResult.questions ?? []).map((q: Omit<Question, "correct_option">) => ({
           ...q,
           correct_option: "", // Never sent from server
         }))

@@ -62,9 +62,11 @@ export default function ExamDetailPage({
     setLoading(false);
   }
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     fetchData();
   }, [examId]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   async function handleUpdateExam(formData: FormData) {
     setSaving(true);
