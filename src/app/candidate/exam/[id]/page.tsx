@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback, use } from "react";
+import { useRouter } from "next/navigation";
 import { startExamAttempt, submitExam, getExamForTaking } from "@/actions/exam-taking";
 import type { Exam, Question } from "@/lib/types";
 import { QuestionCard } from "@/components/question-card";
@@ -18,6 +19,7 @@ export default function TakeExamPage({
   params: Promise<{ id: string }>;
 }) {
   const { id: examId } = use(params);
+  const router = useRouter();
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [attemptId, setAttemptId] = useState<string | null>(null);
@@ -80,9 +82,14 @@ export default function TakeExamPage({
       selected_option: answers[q.id] ?? null,
     }));
 
-    await submitExam({ attempt_id: attemptId, answers: answerList });
-    // redirect happens in server action
-  }, [attemptId, answers, questions, submitting]);
+    const result = await submitExam({ attempt_id: attemptId, answers: answerList });
+    if (result?.error) {
+      setError(result.error);
+      setSubmitting(false);
+    } else if (result?.redirectTo) {
+      router.push(result.redirectTo);
+    }
+  }, [attemptId, answers, questions, submitting, router]);
 
   if (loading) return <p className="text-gray-500 p-8">Loading exam...</p>;
   if (error)
