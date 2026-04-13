@@ -3,7 +3,7 @@
 import { useEffect, useState, use } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { updateExam } from "@/actions/exams";
-import { createQuestion, deleteQuestion } from "@/actions/questions";
+import { createQuestion, updateQuestion, deleteQuestion } from "@/actions/questions";
 import type { Exam, Question } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -48,6 +48,7 @@ export default function ExamDetailPage({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [toggling, setToggling] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingQuestion, setEditingQuestion] = useState<Question | null>(null);
 
   async function fetchData() {
     const supabase = createClient();
@@ -88,6 +89,18 @@ export default function ExamDetailPage({
     }
     setDialogOpen(false);
     toast.success("Question added");
+    fetchData();
+  }
+
+  async function handleEditQuestion(formData: FormData) {
+    if (!editingQuestion) return;
+    const result = await updateQuestion(examId, editingQuestion.id, formData);
+    if (result?.error) {
+      toast.error(result.error);
+      return;
+    }
+    setEditingQuestion(null);
+    toast.success("Question updated");
     fetchData();
   }
 
@@ -272,18 +285,27 @@ export default function ExamDetailPage({
                   Correct answer: {q.correct_option}
                 </CardDescription>
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeleteQuestion(q.id)}
-                disabled={deletingId === q.id}
-              >
-                {deletingId === q.id ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4 text-red-500" />
-                )}
-              </Button>
+              <div className="flex gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setEditingQuestion(q)}
+                >
+                  <Pencil className="h-4 w-4 text-gray-500" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeleteQuestion(q.id)}
+                  disabled={deletingId === q.id}
+                >
+                  {deletingId === q.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4 text-red-500" />
+                  )}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-2">
@@ -304,6 +326,78 @@ export default function ExamDetailPage({
           </Card>
         ))}
       </div>
+      {/* Edit Question Dialog */}
+      <Dialog open={!!editingQuestion} onOpenChange={(open) => !open && setEditingQuestion(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Question</DialogTitle>
+          </DialogHeader>
+          {editingQuestion && (
+            <form action={handleEditQuestion} className="space-y-4" key={editingQuestion.id}>
+              <div className="space-y-2">
+                <Label htmlFor="edit_question_text">Question</Label>
+                <Textarea
+                  id="edit_question_text"
+                  name="question_text"
+                  defaultValue={editingQuestion.question_text}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_option_a">Option A</Label>
+                <Input
+                  id="edit_option_a"
+                  name="option_a"
+                  defaultValue={editingQuestion.options.find((o) => o.label === "A")?.text}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_option_b">Option B</Label>
+                <Input
+                  id="edit_option_b"
+                  name="option_b"
+                  defaultValue={editingQuestion.options.find((o) => o.label === "B")?.text}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_option_c">Option C</Label>
+                <Input
+                  id="edit_option_c"
+                  name="option_c"
+                  defaultValue={editingQuestion.options.find((o) => o.label === "C")?.text}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_option_d">Option D</Label>
+                <Input
+                  id="edit_option_d"
+                  name="option_d"
+                  defaultValue={editingQuestion.options.find((o) => o.label === "D")?.text}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_correct_option">Correct Answer</Label>
+                <Select name="correct_option" defaultValue={editingQuestion.correct_option} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select correct answer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="A">A</SelectItem>
+                    <SelectItem value="B">B</SelectItem>
+                    <SelectItem value="C">C</SelectItem>
+                    <SelectItem value="D">D</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <SubmitButton className="w-full" pendingText="Saving...">Save Changes</SubmitButton>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

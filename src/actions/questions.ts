@@ -66,6 +66,41 @@ export async function createQuestion(examId: string, formData: FormData) {
   return { success: true };
 }
 
+export async function updateQuestion(examId: string, questionId: string, formData: FormData) {
+  const { admin } = await requireAdmin();
+
+  const parsed = createQuestionSchema.safeParse({
+    question_text: formData.get("question_text"),
+    options: [
+      { label: "A", text: formData.get("option_a") },
+      { label: "B", text: formData.get("option_b") },
+      { label: "C", text: formData.get("option_c") },
+      { label: "D", text: formData.get("option_d") },
+    ],
+    correct_option: formData.get("correct_option"),
+  });
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message };
+  }
+
+  const { error } = await admin
+    .from("questions")
+    .update({
+      question_text: parsed.data.question_text,
+      options: parsed.data.options,
+      correct_option: parsed.data.correct_option,
+    })
+    .eq("id", questionId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/admin/exams/${examId}`);
+  return { success: true };
+}
+
 export async function deleteQuestion(examId: string, questionId: string) {
   const { admin } = await requireAdmin();
 
