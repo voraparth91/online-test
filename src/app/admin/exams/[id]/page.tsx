@@ -32,8 +32,9 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { SubmitButton } from "@/components/submit-button";
 
 export default function ExamDetailPage({
   params,
@@ -45,7 +46,8 @@ export default function ExamDetailPage({
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const [toggling, setToggling] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function fetchData() {
     const supabase = createClient();
@@ -69,14 +71,12 @@ export default function ExamDetailPage({
   /* eslint-enable react-hooks/exhaustive-deps */
 
   async function handleUpdateExam(formData: FormData) {
-    setSaving(true);
     const result = await updateExam(examId, formData);
     if (result?.error) {
       toast.error(result.error);
     } else {
       toast.success("Exam updated");
     }
-    setSaving(false);
     fetchData();
   }
 
@@ -93,7 +93,9 @@ export default function ExamDetailPage({
 
   async function handleDeleteQuestion(questionId: string) {
     if (!confirm("Delete this question?")) return;
+    setDeletingId(questionId);
     const result = await deleteQuestion(examId, questionId);
+    setDeletingId(null);
     if (result?.error) {
       toast.error(result.error);
       return;
@@ -166,7 +168,9 @@ export default function ExamDetailPage({
                     type="button"
                     variant="outline"
                     size="sm"
+                    disabled={toggling}
                     onClick={async () => {
+                      setToggling(true);
                       const fd = new FormData();
                       fd.set("title", exam.title);
                       fd.set("description", exam.description);
@@ -180,16 +184,19 @@ export default function ExamDetailPage({
                         exam.is_live ? "Exam set to draft" : "Exam is now live"
                       );
                       fetchData();
+                      setToggling(false);
                     }}
                   >
-                    {exam.is_live ? "Set to Draft" : "Make Live"}
+                    {toggling ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      exam.is_live ? "Set to Draft" : "Make Live"
+                    )}
                   </Button>
                 </div>
               </div>
             </div>
-            <Button type="submit" disabled={saving}>
-              {saving ? "Saving..." : "Save Settings"}
-            </Button>
+            <SubmitButton pendingText="Saving...">Save Settings</SubmitButton>
           </form>
         </CardContent>
       </Card>
@@ -247,9 +254,7 @@ export default function ExamDetailPage({
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="submit" className="w-full">
-                Add Question
-              </Button>
+              <SubmitButton className="w-full" pendingText="Adding...">Add Question</SubmitButton>
             </form>
           </DialogContent>
         </Dialog>
@@ -271,8 +276,13 @@ export default function ExamDetailPage({
                 variant="ghost"
                 size="sm"
                 onClick={() => handleDeleteQuestion(q.id)}
+                disabled={deletingId === q.id}
               >
-                <Trash2 className="h-4 w-4 text-red-500" />
+                {deletingId === q.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                )}
               </Button>
             </CardHeader>
             <CardContent>

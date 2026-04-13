@@ -2,15 +2,26 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, FileText, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, FileText, LogOut, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { logout } from "@/actions/auth";
+import { useFormStatus } from "react-dom";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/candidates", label: "Candidates", icon: Users },
   { href: "/admin/exams", label: "Exams", icon: FileText },
 ];
+
+function LogoutButton() {
+  const { pending } = useFormStatus();
+  return (
+    <Button variant="ghost" className="w-full justify-start gap-3" type="submit" disabled={pending}>
+      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <LogOut className="h-4 w-4" />}
+      {pending ? "Signing out..." : "Sign Out"}
+    </Button>
+  );
+}
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -41,10 +52,7 @@ export function AdminSidebar() {
         })}
       </nav>
       <form action={logout}>
-        <Button variant="ghost" className="w-full justify-start gap-3" type="submit">
-          <LogOut className="h-4 w-4" />
-          Sign Out
-        </Button>
+        <LogoutButton />
       </form>
     </aside>
   );

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { login } from "@/actions/auth";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -13,18 +12,16 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SubmitButton } from "@/components/submit-button";
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(formData: FormData) {
-    setLoading(true);
     setError(null);
     const result = await login(formData);
     if (result?.error) {
       setError(result.error);
-      setLoading(false);
     }
   }
 
@@ -62,9 +59,7 @@ export default function LoginPage() {
                 required
               />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
+            <SubmitButton className="w-full" pendingText="Signing in...">Sign In</SubmitButton>
           </form>
         </CardContent>
       </Card>

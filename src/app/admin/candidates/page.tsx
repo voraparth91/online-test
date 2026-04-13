@@ -31,15 +31,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Plus, Trash2 } from "lucide-react";
+import { Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { SubmitButton } from "@/components/submit-button";
 
 export default function CandidatesPage() {
   const [candidates, setCandidates] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function fetchCandidates() {
     const supabase = createClient();
@@ -58,23 +59,22 @@ export default function CandidatesPage() {
   }, []);
 
   async function handleCreate(formData: FormData) {
-    setSubmitting(true);
     setError(null);
     const result = await createCandidate(formData);
     if (result?.error) {
       setError(result.error);
-      setSubmitting(false);
       return;
     }
     setDialogOpen(false);
-    setSubmitting(false);
     toast.success("Candidate created successfully");
     fetchCandidates();
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Are you sure you want to delete this candidate?")) return;
+    setDeletingId(id);
     const result = await deleteCandidate(id);
+    setDeletingId(null);
     if (result?.error) {
       toast.error(result.error);
       return;
@@ -119,9 +119,7 @@ export default function CandidatesPage() {
                 <Label htmlFor="password">Password</Label>
                 <Input id="password" name="password" type="password" required />
               </div>
-              <Button type="submit" className="w-full" disabled={submitting}>
-                {submitting ? "Creating..." : "Create Candidate"}
-              </Button>
+              <SubmitButton className="w-full" pendingText="Creating...">Create Candidate</SubmitButton>
             </form>
           </DialogContent>
         </Dialog>
@@ -161,8 +159,13 @@ export default function CandidatesPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDelete(c.id)}
+                        disabled={deletingId === c.id}
                       >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+                        {deletingId === c.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        )}
                       </Button>
                     </TableCell>
                   </TableRow>

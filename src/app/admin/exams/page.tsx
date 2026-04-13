@@ -33,13 +33,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, ExternalLink } from "lucide-react";
+import { Loader2, Plus, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { SubmitButton } from "@/components/submit-button";
 
 export default function ExamsPage() {
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   async function fetchExams() {
     const supabase = createClient();
@@ -58,7 +60,9 @@ export default function ExamsPage() {
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this exam and all its questions?")) return;
+    setDeletingId(id);
     const result = await deleteExam(id);
+    setDeletingId(null);
     if (result?.error) {
       toast.error(result.error);
       return;
@@ -116,9 +120,7 @@ export default function ExamsPage() {
                   />
                 </div>
               </div>
-              <Button type="submit" className="w-full">
-                Create Exam
-              </Button>
+              <SubmitButton className="w-full" pendingText="Creating...">Create Exam</SubmitButton>
             </form>
           </DialogContent>
         </Dialog>
@@ -177,8 +179,13 @@ export default function ExamsPage() {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDelete(exam.id)}
+                          disabled={deletingId === exam.id}
                         >
-                          <Trash2 className="h-4 w-4 text-red-500" />
+                          {deletingId === exam.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          )}
                         </Button>
                       </div>
                     </TableCell>
