@@ -89,7 +89,7 @@ export default async function ExamResultsPage({
                           {pct}%
                         </Badge>
                       </TableCell>
-                      <TableCell>
+                      <TableCell suppressHydrationWarning>
                         {new Date(a.submitted_at!).toLocaleString()}
                       </TableCell>
                       <TableCell>

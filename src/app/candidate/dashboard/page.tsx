@@ -141,7 +141,7 @@ export default async function CandidateDashboard() {
                 <CardContent className="flex items-center justify-between py-4">
                   <div>
                     <p className="font-medium">{a.exams?.title ?? "Exam"}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500" suppressHydrationWarning>
                       {new Date(a.submitted_at!).toLocaleString()}
                     </p>
                   </div>

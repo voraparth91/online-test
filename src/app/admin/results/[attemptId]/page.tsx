@@ -77,7 +77,7 @@ export default async function AdminAttemptDetailPage({
               <p className="text-sm text-gray-500">Percentage</p>
             </div>
             <div>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500" suppressHydrationWarning>
                 {new Date(attempt.submitted_at!).toLocaleString()}
               </p>
             </div>

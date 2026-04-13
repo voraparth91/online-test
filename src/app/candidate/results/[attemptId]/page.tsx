@@ -76,7 +76,7 @@ export default async function CandidateResultPage({
               <p className="text-sm text-gray-500">Percentage</p>
             </div>
             <div className="text-center">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500" suppressHydrationWarning>
                 Submitted{" "}
                 {new Date(attempt.submitted_at!).toLocaleString()}
               </p>

@@ -153,7 +153,7 @@ export default function CandidatesPage() {
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.full_name}</TableCell>
                     <TableCell>{c.email}</TableCell>
-                    <TableCell>
+                    <TableCell suppressHydrationWarning>
                       {new Date(c.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
