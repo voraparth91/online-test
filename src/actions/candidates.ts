@@ -36,6 +36,22 @@ export async function createCandidate(formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
+  const username = (formData.get("username") as string)?.trim();
+  if (!username) {
+    return { error: "Username is required" };
+  }
+
+  // Check username uniqueness
+  const { data: existing } = await admin
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .single();
+
+  if (existing) {
+    return { error: "Username is already taken" };
+  }
+
   const { error } = await admin.auth.admin.createUser({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -43,6 +59,7 @@ export async function createCandidate(formData: FormData) {
     user_metadata: {
       full_name: parsed.data.full_name,
       role: "candidate",
+      username,
     },
   });
 

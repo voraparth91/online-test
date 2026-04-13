@@ -113,7 +113,7 @@ export default function CandidatesPage() {
             <DialogHeader>
               <DialogTitle>Create New Candidate</DialogTitle>
               <DialogDescription>
-                Create a candidate account with email and password.
+                Create a candidate account with username and password.
               </DialogDescription>
             </DialogHeader>
             {error && (
@@ -125,6 +125,10 @@ export default function CandidatesPage() {
               <div className="space-y-2">
                 <Label htmlFor="full_name">Full Name</Label>
                 <Input id="full_name" name="full_name" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input id="username" name="username" type="text" placeholder="Login username" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
