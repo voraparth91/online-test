@@ -56,8 +56,7 @@ export default async function AdminAttemptDetailPage({
             <div>
               <p className="text-sm text-gray-500">Candidate</p>
               <p className="font-medium">
-                {(attempt as ExamAttemptWithCandidate & { exams: { title: string } }).profiles?.full_name} (
-                {(attempt as ExamAttemptWithCandidate & { exams: { title: string } }).profiles?.email})
+                {(attempt as ExamAttemptWithCandidate & { exams: { title: string } }).profiles?.full_name}
               </p>
             </div>
             <div className="text-center">

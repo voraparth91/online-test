@@ -61,7 +61,6 @@ export default async function ExamResultsPage({
               <TableHeader>
                 <TableRow>
                   <TableHead>Candidate</TableHead>
-                  <TableHead>Email</TableHead>
                   <TableHead>Score</TableHead>
                   <TableHead>Percentage</TableHead>
                   <TableHead>Submitted</TableHead>
@@ -78,7 +77,6 @@ export default async function ExamResultsPage({
                       <TableCell className="font-medium">
                         {a.profiles?.full_name}
                       </TableCell>
-                      <TableCell>{a.profiles?.email}</TableCell>
                       <TableCell>
                         {a.score}/{a.total_questions}
                       </TableCell>

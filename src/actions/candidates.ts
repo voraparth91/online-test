@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createCandidateSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 
 async function requireAdmin() {
@@ -26,20 +25,13 @@ async function requireAdmin() {
 export async function createCandidate(formData: FormData) {
   const { admin } = await requireAdmin();
 
-  const parsed = createCandidateSchema.safeParse({
-    email: formData.get("email"),
-    full_name: formData.get("full_name"),
-    password: formData.get("password"),
-  });
-
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0].message };
-  }
-
+  const fullName = (formData.get("full_name") as string)?.trim();
   const username = (formData.get("username") as string)?.trim();
-  if (!username) {
-    return { error: "Username is required" };
-  }
+  const password = formData.get("password") as string;
+
+  if (!fullName) return { error: "Name is required" };
+  if (!username) return { error: "Username is required" };
+  if (!password || password.length < 6) return { error: "Password must be at least 6 characters" };
 
   // Check username uniqueness
   const { data: existing } = await admin
@@ -52,12 +44,15 @@ export async function createCandidate(formData: FormData) {
     return { error: "Username is already taken" };
   }
 
+  // Auto-generate email from username (Supabase Auth requires email)
+  const generatedEmail = `${username}@exam.local`;
+
   const { error } = await admin.auth.admin.createUser({
-    email: parsed.data.email,
-    password: parsed.data.password,
+    email: generatedEmail,
+    password,
     email_confirm: true,
     user_metadata: {
-      full_name: parsed.data.full_name,
+      full_name: fullName,
       role: "candidate",
       username,
     },

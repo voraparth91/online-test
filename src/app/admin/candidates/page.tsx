@@ -131,10 +131,6 @@ export default function CandidatesPage() {
                 <Input id="username" name="username" type="text" placeholder="Login username" required />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" name="email" type="email" required />
-              </div>
-              <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <Input id="password" name="password" type="password" required />
               </div>
@@ -161,7 +157,6 @@ export default function CandidatesPage() {
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Username</TableHead>
-                  <TableHead>Email</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead className="w-24"></TableHead>
                 </TableRow>
@@ -171,7 +166,6 @@ export default function CandidatesPage() {
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.full_name}</TableCell>
                     <TableCell>{c.username}</TableCell>
-                    <TableCell>{c.email}</TableCell>
                     <TableCell suppressHydrationWarning>
                       {new Date(c.created_at).toLocaleDateString()}
                     </TableCell>
