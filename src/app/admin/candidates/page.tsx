@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { createCandidate, deleteCandidate } from "@/actions/candidates";
+import { createCandidate, updateCandidate, deleteCandidate } from "@/actions/candidates";
 import type { Profile } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { SubmitButton } from "@/components/submit-button";
 
@@ -41,6 +41,8 @@ export default function CandidatesPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingCandidate, setEditingCandidate] = useState<Profile | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
   async function fetchCandidates() {
     const supabase = createClient();
@@ -67,6 +69,19 @@ export default function CandidatesPage() {
     }
     setDialogOpen(false);
     toast.success("Candidate created successfully");
+    fetchCandidates();
+  }
+
+  async function handleEdit(formData: FormData) {
+    if (!editingCandidate) return;
+    setEditError(null);
+    const result = await updateCandidate(editingCandidate.id, formData);
+    if (result?.error) {
+      setEditError(result.error);
+      return;
+    }
+    setEditingCandidate(null);
+    toast.success("Candidate updated");
     fetchCandidates();
   }
 
@@ -141,32 +156,43 @@ export default function CandidatesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
+                  <TableHead>Username</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Created</TableHead>
-                  <TableHead className="w-16"></TableHead>
+                  <TableHead className="w-24"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {candidates.map((c) => (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.full_name}</TableCell>
+                    <TableCell>{c.username}</TableCell>
                     <TableCell>{c.email}</TableCell>
                     <TableCell suppressHydrationWarning>
                       {new Date(c.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(c.id)}
-                        disabled={deletingId === c.id}
-                      >
-                        {deletingId === c.id ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        )}
-                      </Button>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => { setEditingCandidate(c); setEditError(null); }}
+                        >
+                          <Pencil className="h-4 w-4 text-gray-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(c.id)}
+                          disabled={deletingId === c.id}
+                        >
+                          {deletingId === c.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          )}
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -175,6 +201,54 @@ export default function CandidatesPage() {
           )}
         </CardContent>
       </Card>
+      {/* Edit Candidate Dialog */}
+      <Dialog open={!!editingCandidate} onOpenChange={(open) => !open && setEditingCandidate(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Candidate</DialogTitle>
+            <DialogDescription>
+              Update candidate details. Leave password blank to keep it unchanged.
+            </DialogDescription>
+          </DialogHeader>
+          {editError && (
+            <Alert variant="destructive">
+              <AlertDescription>{editError}</AlertDescription>
+            </Alert>
+          )}
+          {editingCandidate && (
+            <form action={handleEdit} className="space-y-4" key={editingCandidate.id}>
+              <div className="space-y-2">
+                <Label htmlFor="edit_full_name">Full Name</Label>
+                <Input
+                  id="edit_full_name"
+                  name="full_name"
+                  defaultValue={editingCandidate.full_name}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_username">Username</Label>
+                <Input
+                  id="edit_username"
+                  name="username"
+                  defaultValue={editingCandidate.username}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit_password">New Password (optional)</Label>
+                <Input
+                  id="edit_password"
+                  name="password"
+                  type="password"
+                  placeholder="Leave blank to keep current"
+                />
+              </div>
+              <SubmitButton className="w-full" pendingText="Saving...">Save Changes</SubmitButton>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
