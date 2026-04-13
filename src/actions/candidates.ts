@@ -5,19 +5,26 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createCandidateSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 
-export async function createCandidate(formData: FormData) {
+async function requireAdmin() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Unauthorized" };
+  if (!user) throw new Error("Unauthorized");
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient();
+  const { data: profile } = await admin
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
-  if (profile?.role !== "admin") return { error: "Forbidden" };
+  if (profile?.role !== "admin") throw new Error("Forbidden");
+
+  return { admin };
+}
+
+export async function createCandidate(formData: FormData) {
+  const { admin } = await requireAdmin();
 
   const parsed = createCandidateSchema.safeParse({
     email: formData.get("email"),
@@ -29,7 +36,6 @@ export async function createCandidate(formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
-  const admin = createAdminClient();
   const { error } = await admin.auth.admin.createUser({
     email: parsed.data.email,
     password: parsed.data.password,
@@ -49,20 +55,8 @@ export async function createCandidate(formData: FormData) {
 }
 
 export async function deleteCandidate(candidateId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Unauthorized" };
+  const { admin } = await requireAdmin();
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single();
-  if (profile?.role !== "admin") return { error: "Forbidden" };
-
-  const admin = createAdminClient();
   const { error } = await admin.auth.admin.deleteUser(candidateId);
 
   if (error) {

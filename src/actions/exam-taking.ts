@@ -1,18 +1,26 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { submitExamSchema } from "@/lib/validations";
 import { scoreExam } from "@/lib/scoring";
 import { revalidatePath } from "next/cache";
 
-export async function getExamForTaking(examId: string) {
+// Auth check: verify user is authenticated and return their ID
+async function requireCandidate() {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return { error: "Unauthorized" };
+  if (!user) throw new Error("Unauthorized");
+  return user;
+}
 
-  const { data: exam } = await supabase
+export async function getExamForTaking(examId: string) {
+  const user = await requireCandidate();
+  const admin = createAdminClient();
+
+  const { data: exam } = await admin
     .from("exams")
     .select("*")
     .eq("id", examId)
@@ -22,14 +30,14 @@ export async function getExamForTaking(examId: string) {
   if (!exam) return { error: "Exam not found or not live" };
 
   // Fetch questions WITHOUT correct_option — server strips it
-  const { data: questions } = await supabase
+  const { data: questions } = await admin
     .from("questions")
     .select("id, exam_id, question_text, options, sort_order")
     .eq("exam_id", examId)
     .order("sort_order");
 
   // Fetch in-progress attempt if any
-  const { data: existingAttempt } = await supabase
+  const { data: existingAttempt } = await admin
     .from("exam_attempts")
     .select("id, started_at")
     .eq("exam_id", examId)
@@ -51,14 +59,11 @@ export async function getExamForTaking(examId: string) {
 }
 
 export async function startExamAttempt(examId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Unauthorized" };
+  const user = await requireCandidate();
+  const admin = createAdminClient();
 
   // Check if exam is live
-  const { data: exam } = await supabase
+  const { data: exam } = await admin
     .from("exams")
     .select("*")
     .eq("id", examId)
@@ -68,7 +73,7 @@ export async function startExamAttempt(examId: string) {
   if (!exam) return { error: "Exam not found or not live" };
 
   // Check for in-progress attempt
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from("exam_attempts")
     .select("id")
     .eq("exam_id", examId)
@@ -82,7 +87,7 @@ export async function startExamAttempt(examId: string) {
 
   // Check max attempts
   if (exam.max_attempts) {
-    const { count } = await supabase
+    const { count } = await admin
       .from("exam_attempts")
       .select("*", { count: "exact", head: true })
       .eq("exam_id", examId)
@@ -90,18 +95,18 @@ export async function startExamAttempt(examId: string) {
       .not("submitted_at", "is", null);
 
     if (count !== null && count >= exam.max_attempts) {
-      return { error: "Maximum attempts reached" };
+      return { error: "Maximum attempts exceeded for this exam" };
     }
   }
 
   // Get question count
-  const { count: questionCount } = await supabase
+  const { count: questionCount } = await admin
     .from("questions")
     .select("*", { count: "exact", head: true })
     .eq("exam_id", examId);
 
   // Create new attempt
-  const { data: attempt, error } = await supabase
+  const { data: attempt, error } = await admin
     .from("exam_attempts")
     .insert({
       exam_id: examId,
@@ -111,12 +116,7 @@ export async function startExamAttempt(examId: string) {
     .select("id")
     .single();
 
-  if (error) {
-    if (error.message.includes("row-level security")) {
-      return { error: "Maximum attempts exceeded for this exam" };
-    }
-    return { error: error.message };
-  }
+  if (error) return { error: error.message };
 
   return { attemptId: attempt.id };
 }
@@ -130,14 +130,11 @@ export async function submitExam(formData: {
     return { error: parsed.error.issues[0].message };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Unauthorized" };
+  const user = await requireCandidate();
+  const admin = createAdminClient();
 
   // Verify attempt belongs to user and is not submitted
-  const { data: attempt } = await supabase
+  const { data: attempt } = await admin
     .from("exam_attempts")
     .select("*")
     .eq("id", parsed.data.attempt_id)
@@ -148,7 +145,7 @@ export async function submitExam(formData: {
   if (!attempt) return { error: "Attempt not found or already submitted" };
 
   // Fetch correct answers (server-side only)
-  const { data: questions } = await supabase
+  const { data: questions } = await admin
     .from("questions")
     .select("id, correct_option")
     .eq("exam_id", attempt.exam_id);
@@ -166,14 +163,14 @@ export async function submitExam(formData: {
     is_correct: d.is_correct,
   }));
 
-  const { error: answerError } = await supabase
+  const { error: answerError } = await admin
     .from("attempt_answers")
     .insert(answerRows);
 
   if (answerError) return { error: answerError.message };
 
   // Update attempt with score and submission time
-  const { error: updateError } = await supabase
+  const { error: updateError } = await admin
     .from("exam_attempts")
     .update({
       submitted_at: new Date().toISOString(),

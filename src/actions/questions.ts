@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createQuestionSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 
@@ -11,18 +12,19 @@ async function requireAdmin() {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const { data: profile } = await supabase
+  const admin = createAdminClient();
+  const { data: profile } = await admin
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
   if (profile?.role !== "admin") throw new Error("Forbidden");
 
-  return { supabase };
+  return { admin };
 }
 
 export async function createQuestion(examId: string, formData: FormData) {
-  const { supabase } = await requireAdmin();
+  const { admin } = await requireAdmin();
 
   const parsed = createQuestionSchema.safeParse({
     question_text: formData.get("question_text"),
@@ -39,7 +41,7 @@ export async function createQuestion(examId: string, formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
-  const { data: existing } = await supabase
+  const { data: existing } = await admin
     .from("questions")
     .select("sort_order")
     .eq("exam_id", examId)
@@ -48,7 +50,7 @@ export async function createQuestion(examId: string, formData: FormData) {
 
   const nextOrder = existing && existing.length > 0 ? existing[0].sort_order + 1 : 1;
 
-  const { error } = await supabase.from("questions").insert({
+  const { error } = await admin.from("questions").insert({
     exam_id: examId,
     question_text: parsed.data.question_text,
     options: parsed.data.options,
@@ -65,9 +67,9 @@ export async function createQuestion(examId: string, formData: FormData) {
 }
 
 export async function deleteQuestion(examId: string, questionId: string) {
-  const { supabase } = await requireAdmin();
+  const { admin } = await requireAdmin();
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("questions")
     .delete()
     .eq("id", questionId);

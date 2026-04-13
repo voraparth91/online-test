@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createExamSchema, updateExamSchema } from "@/lib/validations";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -12,18 +13,20 @@ async function requireAdmin() {
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Unauthorized");
 
-  const { data: profile } = await supabase
+  // Use admin client to check role (bypasses RLS session issues)
+  const admin = createAdminClient();
+  const { data: profile } = await admin
     .from("profiles")
     .select("role")
     .eq("id", user.id)
     .single();
   if (profile?.role !== "admin") throw new Error("Forbidden");
 
-  return { supabase, user };
+  return { admin, user };
 }
 
 export async function createExam(formData: FormData) {
-  const { supabase, user } = await requireAdmin();
+  const { admin, user } = await requireAdmin();
 
   const parsed = createExamSchema.safeParse({
     title: formData.get("title"),
@@ -36,7 +39,7 @@ export async function createExam(formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await admin
     .from("exams")
     .insert({
       ...parsed.data,
@@ -53,7 +56,7 @@ export async function createExam(formData: FormData) {
 }
 
 export async function updateExam(examId: string, formData: FormData) {
-  const { supabase } = await requireAdmin();
+  const { admin } = await requireAdmin();
 
   const parsed = updateExamSchema.safeParse({
     title: formData.get("title"),
@@ -67,7 +70,7 @@ export async function updateExam(examId: string, formData: FormData) {
     return { error: parsed.error.issues[0].message };
   }
 
-  const { error } = await supabase
+  const { error } = await admin
     .from("exams")
     .update(parsed.data)
     .eq("id", examId);
@@ -82,9 +85,9 @@ export async function updateExam(examId: string, formData: FormData) {
 }
 
 export async function deleteExam(examId: string) {
-  const { supabase } = await requireAdmin();
+  const { admin } = await requireAdmin();
 
-  const { error } = await supabase.from("exams").delete().eq("id", examId);
+  const { error } = await admin.from("exams").delete().eq("id", examId);
 
   if (error) {
     return { error: error.message };
