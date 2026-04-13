@@ -40,12 +40,12 @@ export default function LoginPage() {
           )}
           <form action={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
+                id="username"
+                name="username"
+                type="text"
+                placeholder="Enter your username"
                 required
               />
             </div>

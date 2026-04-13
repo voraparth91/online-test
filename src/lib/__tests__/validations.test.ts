@@ -8,17 +8,25 @@ import {
 } from "../validations";
 
 describe("loginSchema", () => {
-  it("accepts valid login", () => {
+  it("accepts valid login with email as username", () => {
     const result = loginSchema.safeParse({
-      email: "test@example.com",
+      username: "test@example.com",
       password: "password123",
     });
     expect(result.success).toBe(true);
   });
 
-  it("rejects invalid email", () => {
+  it("accepts valid login with short username", () => {
     const result = loginSchema.safeParse({
-      email: "not-an-email",
+      username: "tirtha",
+      password: "password123",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty username", () => {
+    const result = loginSchema.safeParse({
+      username: "",
       password: "password123",
     });
     expect(result.success).toBe(false);
@@ -26,7 +34,7 @@ describe("loginSchema", () => {
 
   it("rejects short password", () => {
     const result = loginSchema.safeParse({
-      email: "test@example.com",
+      username: "tirtha",
       password: "12345",
     });
     expect(result.success).toBe(false);
