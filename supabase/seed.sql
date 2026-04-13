@@ -1,0 +1,6 @@
+-- ===========================================
+-- SEED DATA: Insurance Fundamentals Exam
+-- ===========================================
+-- NOTE: Auth users must be created via the Supabase Admin API.
+-- Run the seed via: POST /api/seed?secret=seed-dev-only
+-- This file is for reference only.
