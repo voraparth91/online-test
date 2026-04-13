@@ -82,12 +82,20 @@ export default function TakeExamPage({
       selected_option: answers[q.id] ?? null,
     }));
 
-    const result = await submitExam({ attempt_id: attemptId, answers: answerList });
-    if (result?.error) {
-      setError(result.error);
-      setSubmitting(false);
-    } else if (result?.redirectTo) {
-      router.push(result.redirectTo);
+    try {
+      const result = await submitExam({ attempt_id: attemptId, answers: answerList });
+      if (result?.error) {
+        setError(result.error);
+        setSubmitting(false);
+      } else if (result?.redirectTo) {
+        router.push(result.redirectTo);
+      } else {
+        // Fallback: if no redirect info, go to dashboard
+        router.push("/candidate/dashboard");
+      }
+    } catch {
+      // Server action may throw on redirect or network issues
+      router.push("/candidate/dashboard");
     }
   }, [attemptId, answers, questions, submitting, router]);
 

@@ -111,7 +111,12 @@ export async function startExamAttempt(examId: string) {
     .select("id")
     .single();
 
-  if (error) return { error: error.message };
+  if (error) {
+    if (error.message.includes("row-level security")) {
+      return { error: "Maximum attempts exceeded for this exam" };
+    }
+    return { error: error.message };
+  }
 
   return { attemptId: attempt.id };
 }
