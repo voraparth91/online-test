@@ -315,7 +315,7 @@ export async function POST(request: Request) {
         is_live: false,
         created_by: adminProfile.id,
       })
-      .select("id")
+      .select("id, title")
       .single();
 
     if (examError) throw examError;

@@ -33,7 +33,7 @@ export async function createExam(formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message };
+    return { error: parsed.error.issues[0].message };
   }
 
   const { data, error } = await supabase
@@ -64,7 +64,7 @@ export async function updateExam(examId: string, formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message };
+    return { error: parsed.error.issues[0].message };
   }
 
   const { error } = await supabase

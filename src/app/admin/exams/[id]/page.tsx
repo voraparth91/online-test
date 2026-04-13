@@ -200,7 +200,7 @@ export default function ExamDetailPage({
           Questions ({questions.length})
         </h2>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Add Question

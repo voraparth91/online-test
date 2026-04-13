@@ -41,7 +41,7 @@ export default function TakeExamPage({
 
       setExam(examResult.exam);
       setQuestions(
-        examResult.questions.map((q: any) => ({
+        (examResult.questions ?? []).map((q: any) => ({
           ...q,
           correct_option: "", // Never sent from server
         }))

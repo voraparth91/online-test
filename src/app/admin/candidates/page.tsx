@@ -87,7 +87,7 @@ export default function CandidatesPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Candidates</h1>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Add Candidate

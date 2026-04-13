@@ -71,7 +71,7 @@ export default function ExamsPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Exams</h1>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger asChild>
+          <DialogTrigger>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               Create Exam
@@ -84,7 +84,7 @@ export default function ExamsPage() {
                 Set up an exam. You can add questions after creating it.
               </DialogDescription>
             </DialogHeader>
-            <form action={createExam} className="space-y-4">
+            <form action={async (fd) => { await createExam(fd); }} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="title">Title</Label>
                 <Input id="title" name="title" required />

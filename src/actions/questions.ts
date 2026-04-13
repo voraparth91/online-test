@@ -36,7 +36,7 @@ export async function createQuestion(examId: string, formData: FormData) {
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.errors[0].message };
+    return { error: parsed.error.issues[0].message };
   }
 
   const { data: existing } = await supabase
